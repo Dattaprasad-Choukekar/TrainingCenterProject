@@ -93,13 +93,74 @@ class ProjectResource extends HttpResource {
    * @return type
    */
   protected function is_admin() {
-   $result = false;
-    if (isset($_SERVER["PHP_AUTH_USER"])) {
+   $result = true;
+ /*   if (isset($_SERVER["PHP_AUTH_USER"])) {
       $result = $_SERVER["PHP_AUTH_USER"] == "admin"
               && $_SERVER["PHP_AUTH_PW"] == "admin";
     }
+	*/
     return $result;
 
+  }
+  
+    protected function do_post() {
+    if (!$this->is_admin()) {
+      $this->exit_error(401, "mustBeAdmin");
+    }
+    // Les parametres passes en put
+    parse_str(file_get_contents("php://input"), $_PUT);
+    if (empty($_PUT["title"])) {
+      $this->exit_error(400, "titleMandatoryAndNotEmpty");
+    } else if (empty($_PUT["subject"])) {
+      $this->exit_error(400, "subjectMandatoryAndNotEmpty");
+    }else if (empty($_PUT["class_id"])) {
+      $this->exit_error(400, "classIdMandatoryAndNotEmpty");
+    }else if (empty($_PUT["owner_id"])) {
+      $this->exit_error(400, "ownerIdMandatoryAndNotEmpty");
+    }
+    else {
+      try {
+        $db = DemoDB::getConnection();
+        $sql = "INSERT INTO project (title, subject, deadline, class_id, owner_id) VALUES ( :title, :subject, :deadline, :class_id, :owner_id);";
+        $stmt = $db->prepare($sql);
+        $stmt->bindValue(":title", ucwords(trim($_PUT["title"])));
+		$stmt->bindValue(":subject", ucwords(trim($_PUT["subject"])));
+		$stmt->bindValue(":class_id", trim($_PUT["class_id"]), PDO::PARAM_INT);
+		$stmt->bindValue(":owner_id", trim($_PUT["owner_id"]), PDO::PARAM_INT);
+		$stmt->bindValue(":deadline", trim($_PUT["deadline"]));
+        $ok = $stmt->execute();
+        if ($ok) {
+          $this->statusCode = 204;
+          $this->body = "";
+          // Number of affected rows
+          $nb = $stmt->rowCount();
+          if ($nb == 0) {
+            // No person or not really changed.
+            // Check it;
+            $sql = "SELECT person_id FROM person WHERE person_id=:id";
+            $stmt = $db->prepare($sql);
+            $stmt->bindValue(":id", $_GET["id"]);
+            $ok = $stmt->execute();
+            if ($stmt->fetch() == null) {
+              $this->exit_error(404);
+            }
+          }
+        }
+        else {
+          $erreur = $stmt->errorInfo();
+          // si doublon
+          if ($erreur[1] == 1062) {
+            $this->exit_error(409, "duplicateName");
+          }
+          else {
+            $this->exit_error(409, $erreur[1]." : ".$erreur[2]);
+          }
+        }
+      }
+      catch (PDOException $e) {
+        $this->exit_error(500, $e->getMessage());
+      }
+    }
   }
 
   protected function do_put() {
