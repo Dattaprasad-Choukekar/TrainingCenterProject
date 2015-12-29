@@ -20,10 +20,16 @@ if (isset($_POST['submit'])) {
 	// Establishing Connection with Server by passing server_name, user_id and password as a parameter
 
 
-	if ($username=='1' && $password=='1') {
-		$_SESSION['login_user']=$username; // Initializing Session
+	if ($username=='Jack' && $password=='Jack') {
+		$_SESSION['login_user']=$username;
+		// Initializing Session
 		header("location: index.php"); // Redirecting To Other Page
-	} else {
+	}if ($username=='1' && $password=='1') {
+		$_SESSION['login_user']=$username;
+		// Initializing Session
+		header("location: index.php"); // Redirecting To Other Page
+	}  
+	else {
 		$error = "Username or Password is invalid";
 	}
 

@@ -47,7 +47,13 @@ class ProjectResource extends HttpResource {
         }
       }
       else {
-        $this->exit_error(400, "idNotPositiveInteger");
+		  if ($_GET["id"] != "*") {
+			$this->exit_error(400, "idNotPositiveInteger");
+			
+		  } else {
+			  $this->id = 0 ;
+
+		  }
       }
     }
     else {
@@ -58,6 +64,7 @@ class ProjectResource extends HttpResource {
   protected function do_get() {
     // Call the parent
     parent::do_get();
+	if ($_GET["id"]!="*" ) {
     try {
 		
       $db = DemoDB::getConnection();
@@ -85,6 +92,65 @@ class ProjectResource extends HttpResource {
     catch (PDOException $e) {
       $this->exit_error(500, $e->getMessage());
     }
+  } else {
+	 
+	 if (isset($_GET["owner_id"])) {
+      if (is_numeric($_GET["owner_id"])) {
+		  
+		}
+		else {
+			$this->exit_error(400, "owner_idNotPositiveInteger");
+		}
+	 }else {
+		   $this->exit_error(400, "owner_idRequired");
+		 
+	 }
+	 
+	     try {
+		
+      $db = DemoDB::getConnection();
+      $sql = "SELECT id, title, subject, creation_datetime, deadline, class_id, owner_id FROM Project WHERE owner_id=:owner_id";
+      $stmt = $db->prepare($sql);
+      $stmt->bindValue(":owner_id", $_GET["owner_id"], PDO::PARAM_INT );
+	  
+      $ok = $stmt->execute();
+	  $sbody = "{";
+	  
+      if ($ok) {
+		
+		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+			if ($row != null) {
+				if (isset($this->statusCode)) {
+			$this->statusCode = 200;
+		}
+		 
+		if (isset($this->headers)) {
+			$this->headers[] = "Content-type: text/json; charset=utf-8";
+		}
+         
+          // Produce utf8 encoded json
+          
+          $sbody .= "\"".$row["id"]."\":".json_encode($row).",";
+		  
+        }
+        else {
+          $this->exit_error(404);
+        }
+		}
+		
+		$this->body = $sbody."}";
+        
+        
+      }
+      else {
+        $this->exit_error(500, print_r($db->errorInfo(), true));
+      }
+    }
+    catch (PDOException $e) {
+      $this->exit_error(500, $e->getMessage());
+    }
+	
+  }
   }
 
   /** Is the request sent by an admin?
