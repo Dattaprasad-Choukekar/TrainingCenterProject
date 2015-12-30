@@ -1,9 +1,12 @@
 <?php
 include('private/session.php');
+require_once("private/utils.php");
 
 if($_SESSION['login_user_type']!=TRAINER){
 header('Location: index.php'); // Redirecting To Login Page
 }
+
+
 ?>
 
 
@@ -34,37 +37,94 @@ header('Location: index.php'); // Redirecting To Login Page
 				<th>Subject</th>
 				<th>Creation Date</th>
 				<th>Deadline</th>
+				<th>Class Name</th>
 				<th>Edit</th>
 				<th>Delete</th>
 			</tr>
 		</thead>
 
-		<tbody>
+		<tbody id="projects_tbody">
 
-				<tr id="" />"
-			
-					<td><c:out value="${identity.id}" /></td>
-					<td><c:out value="${identity.firstName}" /></td>
-					<td><c:out value="${identity.lastName}" /></td>
-					<td><c:out value="${identity.email}" /></td>
-					<fmt:formatDate value="${identity.birthDate}" pattern="yyyy-MM-dd"
-						var="formattedBirthDate" />
-					<td><c:out value="${formattedBirthDate}" /></td>
-					<c:forEach var="attribute" items="${attributes}">
-						<td><c:out value="${identity.attributes[attribute]}" /></td>
-					</c:forEach>				
-					<td><a
-						href="updateIdentity?id=<c:out value="${identity.id}" />"><span
-							class="glyphicon glyphicon-edit" aria-hidden="true"></span></a></td>
-					<td><a
-						href="deleteIdentity?id=<c:out value="${identity.id}" />"><span
-							class="glyphicon glyphicon-remove" aria-hidden="true"></span></a></td>
-				</tr>
-			</c:forEach>
 		</tbody>
 	</table>
 </div>
+ <script>
+      $(document).ready(function () {
+        // Get data from server when click on Reload button
+       var responseBody={};
+          $.ajax({
+            // HTTP mthod
+            type: "GET",
+            url: "/TCP/WS/ProjectResource.php?id=*&owner_id=<?= $_SESSION['login_user_id'] ?>",
+            // return type
+            dataType: "json",
+            // error processing
+            // xhr is the related XMLHttpRequest object
+            error: function (xhr, string) {
+              var msg = (xhr.status == 404)
+                      ? "project   not found"
+                      : "Error : " + xhr.status + " " + xhr.statusText;
+				console.log(msg);
+				console.log(string);
+            },
+            // success processing (when 200,201, 204 etc)
+            success: function (data) {
+				
+				processResponse(data);
+            }
+          });
+		
+		
+		function processResponse(responseBody) {
+			
+			for (var key in responseBody) {
+				var rowData = responseBody[key];
+				var rowDatahtml="<tr>";
+				
+				rowDatahtml= rowDatahtml + "<td>" + rowData["id"] + "</td>";
+				rowDatahtml= rowDatahtml + "<td>" + rowData["title"] + "</td>";
+				rowDatahtml= rowDatahtml +"<td>" + rowData["subject"] + "</td>";
+				rowDatahtml= rowDatahtml + "<td>" + rowData["creation_datetime"] + "</td>";
+				rowDatahtml= rowDatahtml + "<td>" + rowData["deadline"] + "</td>";
+				rowDatahtml= rowDatahtml + "<td>" + rowData["class_id"] + "</td>";
+				console.log(getClassNameById(rowData["class_id"]));
+				rowDatahtml = rowDatahtml + "<td><a href='EditProject.php?project_id="+ rowData["id"]+ "'><span class='glyphicon glyphicon-edit' aria-hidden='true'></span></a></td>";
+				rowDatahtml = rowDatahtml + "<td><a href='DeleteProject.php?project_id="+ rowData["id"]+ "'><span class='glyphicon glyphicon-remove' aria-hidden='true'></span></a></td>";
+				rowDatahtml = rowDatahtml + "</tr>";
+				//console.log(rowDatahtml);
+				$("#projects_tbody").append(rowDatahtml);
+						
+				
+			}
+			
+		};
+		
+		
+			function getClassNameById(id) {
+				return 	 $.ajax({
+					// HTTP mthod
+					type: "GET",
+					url: "/TCP/WS/ClassResource.php?id="+ id,
+					// return type
+					dataType: "json",
+					// error processing
+					// xhr is the related XMLHttpRequest object
+					error: function (xhr, string) {
 
+						console.log(msg);
+						console.log(string);
+					},
+					// success processing (when 200,201, 204 etc)
+					success: function (data) {
+						
+					}
+				  });
+				 
+				
+			};
+      });
+
+    </script>
 
 
 </div>

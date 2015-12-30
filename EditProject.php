@@ -1,44 +1,36 @@
 <?php
 include('private/session.php');
 require_once("WS/DemoDB.php");
-require_once("private/utils.php");
 
 if($_SESSION['login_user_type']!=TRAINER){
 header('Location: index.php'); // Redirecting To Login Page
 }
-?>
 
-<?php
+ if (!isset($_GET["project_id"]) || !is_numeric($_GET["project_id"])) {
+	header('Location: index.php'); 
+ }
 
-$error=''; // Variable To Store Error Message
-if (isset($_POST['submit'])) {
-	if (empty($_POST['title']) || empty($_POST['subject'])  || empty($_POST['class_id'])  ) {
-		$error = "Fields can not be empty";
-	}
-	else
-	{
+ 
 
-	}
-}
 
 ?>
+
+
 
 <html lang="en">
 <head>
 <?php require 'base/head.html';?>
-<title>Create a new Project</title>
+<title>Edit Project</title>
 </head>
 
 <body>
+
 <?php require 'base/top.html';?>
 
 
 <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-		<?php 
-		print $error;
-		?>
 
-<h1 class="page-header">Create a new Project</h1>
+<h1 class="page-header">Edit Project</h1>
 
 <div class="row placeholders"></div>
 
@@ -47,7 +39,7 @@ if (isset($_POST['submit'])) {
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="title">Title:</label>
 		<div class="col-sm-10">
-			<input type="text" class="form-control" name="title" id="title"
+			<input type="text" class="form-control" name="title" id="title" value=""
 				placeholder="Enter title" required>
 		</div>
 	</div>
@@ -65,25 +57,6 @@ if (isset($_POST['submit'])) {
 				placeholder="Enter Deadline">
 		</div>
 	</div>
-	<div class="form-group">
-		<label class="control-label col-sm-2" for="class_id">Class:</label>
-		<div class="col-sm-10">
-		<!--	<input type="number" class="form-control" name="class_id" id="class_id"
-				placeholder="Enter Class id"> -->
-				<select class="form-control" id="class_id" name="class_id">
-				<?php
-				$result = getClassData();
-				if ($result != null) {
-					foreach ($result as $key => $value) {
-					
-							echo "<option  value='".$value['id'] ."'>".$value['name']. "</option>";
-					}
-				}
-				
-				?>
-				</select>
-		</div>
-	</div>
 	
 	<div class="form-group">
 		<div class="col-sm-offset-2 col-sm-10">
@@ -92,22 +65,52 @@ if (isset($_POST['submit'])) {
 	</div>
 </form>
 
+</div>
 
  <script>
       $(document).ready(function () {
-		  
-		  
-		  
-        // Get data from server when click on Reload button
-        $("#submit").click(function (event) {
-		  event.preventDefault();
+		  		 
+          $.ajax({
+            // HTTP mthod
+            type: "GET",
+            url: "/TCP/WS/ProjectResource.php?id=<?=$_GET["project_id"]?>",
+            // return type
+			body:"",
+            // error processing
+            // xhr is the related XMLHttpRequest object
+            error: function (xhr, string) {
+				
+				console.log(xhr.status );
+				console.log(xhr.statusText );
+				console.log(xhr.responseText );
+				window.location="/TCP/index.php";
+				//var msg = (xhr.status == 404    ? "Person   not found": "Error : " + xhr.status + " " + xhr.statusText;
+              //$("#message").html(msg);
+            },
+            // success processing (when 200,201, 204 etc)
+            success: function (data) {
+				
+				if (data["id"]) {
+					$("#title").val(data["title"]);
+					$("#subject").val(data["subject"]);
+					$("#deadline").val(data["deadline"].substring(0,10));					
+					
+				} else {
+					window.location="/TCP/index.php";
+				}
+				
+				
+				$("#submit").click(function(){
+
+					event.preventDefault();
+		 
 		  var body = $("#form").serialize();
-		  body = body + "&owner_id=<?= $_SESSION['login_user_id'] ?>";
+		  body = body ;
 		  console.log(body);
           $.ajax({
             // HTTP mthod
-            type: "PUT",
-            url: "/TCP/WS/ProjectResource.php?id=1",
+            type: "POST",
+            url: "/TCP/WS/ProjectResource.php?id=<?= $_GET['project_id'] ?>",
             // return type
 			data:body,
             // error processing
@@ -121,28 +124,31 @@ if (isset($_POST['submit'])) {
             },
             // success processing (when 200,201, 204 etc)
             success: function (data) {
-				window.location="/TCP/CreateProject.php";
+				
+				window.location="/TCP/ListProjects.php";
+
+            }
+          });
+					
+					}
+				);
+				
+				
+				
+				
               //$("#name").val(data.name);
               //$("#message").html("Person loaded")
             }
           });
 		  
-		  
-		  
-		 
-        }
-		
-		
-		);
+	
+
 
 
       });
 
     </script>
 
-
-
-</div>
 <?php require 'base/bottom.html';?>
 </body>
 </html>

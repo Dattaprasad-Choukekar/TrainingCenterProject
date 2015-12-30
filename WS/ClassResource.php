@@ -33,7 +33,7 @@
 require_once("HttpResource.php");
 require_once("DemoDB.php");
 
-class ProjectResource extends HttpResource {
+class ClassResource extends HttpResource {
   /** Person id */
   protected $id;
 
@@ -64,63 +64,41 @@ class ProjectResource extends HttpResource {
   protected function do_get() {
     // Call the parent
     parent::do_get();
-	if ($_GET["id"]!="*" ) {
-    try {
-		
-      $db = DemoDB::getConnection();
-      $sql = "SELECT id, title, subject, creation_datetime, deadline, class_id, owner_id FROM Project WHERE id=:project_id";
-      $stmt = $db->prepare($sql);
-      $stmt->bindValue(":project_id", $this->id);
-      $ok = $stmt->execute();
-      if ($ok) {
-		
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($row != null) {
-          $this->statusCode = 200;
-          // Produce utf8 encoded json
-          $this->headers[] = "Content-type: text/json; charset=utf-8";
-          $this->body = json_encode($row);
-        }
-        else {
-          $this->exit_error(404);
-        }
-      }
-      else {
-        $this->exit_error(500, print_r($db->errorInfo(), true));
-      }
-    }
-    catch (PDOException $e) {
-      $this->exit_error(500, $e->getMessage());
-    }
-  } else {
 	 
-	 if (isset($_GET["owner_id"])) {
-      if (is_numeric($_GET["owner_id"])) {
+	
+	
+	 if (isset($_GET["id"])) {
+      if (is_numeric($_GET["id"])) {
 		  
 		}
 		else {
-			$this->exit_error(400, "owner_idNotPositiveInteger");
+			$this->exit_error(400, "idNotPositiveInteger");
 		}
 	 }else {
-		   $this->exit_error(400, "owner_idRequired");
+		   $this->exit_error(400, "idRequired");
 		 
 	 }
 	 
 	     try {
 		
       $db = DemoDB::getConnection();
-      $sql = "SELECT id, title, subject, creation_datetime, deadline, class_id, owner_id FROM Project WHERE owner_id=:owner_id";
+      $sql = "SELECT * FROM Class where id=:id;";
       $stmt = $db->prepare($sql);
-      $stmt->bindValue(":owner_id", $_GET["owner_id"], PDO::PARAM_INT );
+      $stmt->bindValue(":id", $_GET["id"], PDO::PARAM_INT );
 	  
       $ok = $stmt->execute();
-	  $sbody = "{";
 	  
       if ($ok) {
+		  
+		 $nb = $stmt->rowCount();
+		 if($nb==0) {
+			 $this->exit_error(404);
+		 }
 		if (isset($this->statusCode)) {
 			$this->statusCode = 200;
 		}
 		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+			
 			if ($row != null) {
 				
 		 
@@ -129,16 +107,16 @@ class ProjectResource extends HttpResource {
 		}
          
           // Produce utf8 encoded json
-          
-          $sbody .= "\"".$row["id"]."\":".json_encode($row).",";
+          $this->body =  json_encode($row);
+		
 		  
         }
         else {
           $this->exit_error(404);
         }
 		}
-		$sbody = rtrim($sbody, ",");
-		$this->body = $sbody."}";
+		
+		
         
         
       }
@@ -150,7 +128,7 @@ class ProjectResource extends HttpResource {
       $this->exit_error(500, $e->getMessage());
     }
 	
-  }
+  
   }
 
   /** Is the request sent by an admin?
@@ -324,5 +302,5 @@ class ProjectResource extends HttpResource {
 }
 
 // Simply run the resource
-ProjectResource::run();
+ClassResource::run();
 ?>
