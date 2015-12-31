@@ -47,13 +47,13 @@ class ClassResource extends HttpResource {
         }
       }
       else {
-		  if ($_GET["id"] != "*") {
-			$this->exit_error(400, "idNotPositiveInteger");
-			
-		  } else {
-			  $this->id = 0 ;
+                  if ($_GET["id"] != "*") {
+                        $this->exit_error(400, "idNotPositiveInteger");
+                        
+                  } else {
+                          $this->id = 0 ;
 
-		  }
+                  }
       }
     }
     else {
@@ -64,59 +64,49 @@ class ClassResource extends HttpResource {
   protected function do_get() {
     // Call the parent
     parent::do_get();
-	 
-	
-	
-	 if (isset($_GET["id"])) {
+         
+        
+        
+         if (isset($_GET["id"])) {
       if (is_numeric($_GET["id"])) {
-		  
-		}
-		else {
-			$this->exit_error(400, "idNotPositiveInteger");
-		}
-	 }else {
-		   $this->exit_error(400, "idRequired");
-		 
-	 }
-	 
-	     try {
-		
+                   try {
+                
       $db = DemoDB::getConnection();
       $sql = "SELECT * FROM Class where id=:id;";
       $stmt = $db->prepare($sql);
       $stmt->bindValue(":id", $_GET["id"], PDO::PARAM_INT );
-	  
+          
       $ok = $stmt->execute();
-	  
+          
       if ($ok) {
-		  
-		 $nb = $stmt->rowCount();
-		 if($nb==0) {
-			 $this->exit_error(404);
-		 }
-		if (isset($this->statusCode)) {
-			$this->statusCode = 200;
-		}
-		while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-			
-			if ($row != null) {
-				
-		 
-		if (isset($this->headers)) {
-			$this->headers[] = "Content-type: text/json; charset=utf-8";
-		}
+                  
+                 $nb = $stmt->rowCount();
+                 if($nb==0) {
+                         $this->exit_error(404);
+                 }
+                if (isset($this->statusCode)) {
+                        $this->statusCode = 200;
+                }
+                while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                        
+                    if ($row != null) {
+                                
+                 
+					if (isset($this->headers)) {
+                        $this->headers[] = "Content-type: text/json; charset=utf-8";
+                }
          
           // Produce utf8 encoded json
           $this->body =  json_encode($row);
-		
-		  
+                
+                  
         }
         else {
           $this->exit_error(404);
         }
-		}
-		
-		
+                }
+                
+                
         
         
       }
@@ -127,7 +117,68 @@ class ClassResource extends HttpResource {
     catch (PDOException $e) {
       $this->exit_error(500, $e->getMessage());
     }
+                }
+                else if($_GET["id"]=="*") {
+                         try {
+                
+	 $db = DemoDB::getConnection();
+      $sql = "SELECT * FROM Class";
+      $stmt = $db->prepare($sql);
 	
+          
+      $ok = $stmt->execute();
+          
+      if ($ok) {
+                  $sbody = "{";
+                 $nb = $stmt->rowCount();
+                 if($nb==0) {
+                         $this->exit_error(404);
+                 }
+                if (isset($this->statusCode)) {
+                        $this->statusCode = 200;
+                }
+                while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                        
+                        if ($row != null) {
+                                
+                 
+                if (isset($this->headers)) {
+                        $this->headers[] = "Content-type: text/json; charset=utf-8";
+                }
+         
+          // Produce utf8 encoded json
+          $sbody .= "\"".$row["id"]."\":".json_encode($row).",";
+                
+                  
+        }
+        else {
+          $this->exit_error(404);
+        }
+                }
+                $sbody = rtrim($sbody, ",");
+                $this->body = $sbody."}";
+                
+                
+        
+        
+      }
+      else {
+        $this->exit_error(500, print_r($db->errorInfo(), true));
+      }
+    }
+    catch (PDOException $e) {
+      $this->exit_error(500, $e->getMessage());
+    }
+                } else {
+                        $this->exit_error(400, "idNotPositiveInteger");
+                }
+         }else {
+                   $this->exit_error(400, "idRequired");
+                 
+         }
+         
+            
+        
   
   }
 
@@ -142,7 +193,7 @@ class ClassResource extends HttpResource {
       $result = $_SERVER["PHP_AUTH_USER"] == "admin"
               && $_SERVER["PHP_AUTH_PW"] == "admin";
     }
-	*/
+        */
     return $result;
 
   }
@@ -163,22 +214,22 @@ class ClassResource extends HttpResource {
         $db = DemoDB::getConnection();
         $sql = "UPDATE project set title=:title, subject=:subject, deadline=:deadline where id=:id";
         $stmt = $db->prepare($sql);
-		$stmt->bindValue(":id", ucwords(trim($_GET["id"])));
+                $stmt->bindValue(":id", ucwords(trim($_GET["id"])));
         $stmt->bindValue(":title", ucwords(trim($_PUT["title"])));
-		$stmt->bindValue(":subject", ucwords(trim($_PUT["subject"])));
-		if (isset($_PUT["deadline"])) {
-			$stmt->bindValue(":deadline", trim($_PUT["deadline"]));
-		} else {
-			$stmt->bindValue(":deadline", '');
-		}
+                $stmt->bindValue(":subject", ucwords(trim($_PUT["subject"])));
+                if (isset($_PUT["deadline"])) {
+                        $stmt->bindValue(":deadline", trim($_PUT["deadline"]));
+                } else {
+                        $stmt->bindValue(":deadline", '');
+                }
 
-		
+                
         $ok = $stmt->execute();
         if ($ok) {
           $this->statusCode = 204;
           $this->body = "";
           // Number of affected rows
-		   $nb = $stmt->rowCount();
+                   $nb = $stmt->rowCount();
           if ($nb == 0) {
             // No person or not really changed.
             // Check it;
@@ -187,10 +238,10 @@ class ClassResource extends HttpResource {
             $stmt->bindValue(":id", $_GET["id"]);
             $ok = $stmt->execute();
             if ($stmt->fetch() == null) {
-				$this->exit_error(404, "project_idDoesNotExist");
+                                $this->exit_error(404, "project_idDoesNotExist");
             }
           }
-		  
+                  
         }
         else {
           $erreur = $stmt->errorInfo();
@@ -230,10 +281,10 @@ class ClassResource extends HttpResource {
         $sql = "INSERT INTO project (title, subject, deadline, class_id, owner_id) VALUES ( :title, :subject, :deadline, :class_id, :owner_id);";
         $stmt = $db->prepare($sql);
         $stmt->bindValue(":title", ucwords(trim($_PUT["title"])));
-		$stmt->bindValue(":subject", ucwords(trim($_PUT["subject"])));
-		$stmt->bindValue(":class_id", trim($_PUT["class_id"]), PDO::PARAM_INT);
-		$stmt->bindValue(":owner_id", trim($_PUT["owner_id"]), PDO::PARAM_INT);
-		$stmt->bindValue(":deadline", trim($_PUT["deadline"]));
+                $stmt->bindValue(":subject", ucwords(trim($_PUT["subject"])));
+                $stmt->bindValue(":class_id", trim($_PUT["class_id"]), PDO::PARAM_INT);
+                $stmt->bindValue(":owner_id", trim($_PUT["owner_id"]), PDO::PARAM_INT);
+                $stmt->bindValue(":deadline", trim($_PUT["deadline"]));
         $ok = $stmt->execute();
         if ($ok) {
           $this->statusCode = 204;
@@ -304,3 +355,4 @@ class ClassResource extends HttpResource {
 // Simply run the resource
 ClassResource::run();
 ?>
+

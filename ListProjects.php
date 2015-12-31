@@ -1,9 +1,9 @@
 <?php
-include('private/session.php');
-require_once("private/utils.php");
+include ('private/session.php');
+require_once ("private/utils.php");
 
-if($_SESSION['login_user_type']!=TRAINER){
-header('Location: index.php'); // Redirecting To Login Page
+if ($_SESSION['login_user_type'] != TRAINER) {
+    header('Location: index.php'); // Redirecting To Login Page
 }
 
 
@@ -13,19 +13,19 @@ header('Location: index.php'); // Redirecting To Login Page
 
 <html lang="en">
 <head>
-<?php require 'base/head.html';?>
+<?php require 'base/head.html'; ?>
 <title>Projects List</title>
 </head>
 
 <body>
-<?php require 'base/top.html';?>
+<?php require 'base/top.html'; ?>
 
 
 <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
 
 <div class="row placeholders"></div>
 
-<?php require 'base/top.html';?>
+<?php require 'base/top.html'; ?>
 
 <!-- <h2 class="sub-header">List of Identities</h2> -->
 <div class="table-responsive">
@@ -86,8 +86,8 @@ header('Location: index.php'); // Redirecting To Login Page
 				rowDatahtml= rowDatahtml +"<td>" + rowData["subject"] + "</td>";
 				rowDatahtml= rowDatahtml + "<td>" + rowData["creation_datetime"] + "</td>";
 				rowDatahtml= rowDatahtml + "<td>" + rowData["deadline"] + "</td>";
-				rowDatahtml= rowDatahtml + "<td>" + rowData["class_id"] + "</td>";
-				console.log(getClassNameById(rowData["class_id"]));
+				rowDatahtml= rowDatahtml + "<td name='class_id'>" + rowData["class_id"] + "</td>";
+				//console.log(getClassNameById(rowData["class_id"]));
 				rowDatahtml = rowDatahtml + "<td><a href='EditProject.php?project_id="+ rowData["id"]+ "'><span class='glyphicon glyphicon-edit' aria-hidden='true'></span></a></td>";
 				rowDatahtml = rowDatahtml + "<td><a href='DeleteProject.php?project_id="+ rowData["id"]+ "'><span class='glyphicon glyphicon-remove' aria-hidden='true'></span></a></td>";
 				rowDatahtml = rowDatahtml + "</tr>";
@@ -96,29 +96,41 @@ header('Location: index.php'); // Redirecting To Login Page
 						
 				
 			}
-			
+			setClassNameData();
 		};
 		
 		
-			function getClassNameById(id) {
-				return 	 $.ajax({
+			function setClassNameData() {
+
+				
+				 $.ajax({
 					// HTTP mthod
 					type: "GET",
-					url: "/TCP/WS/ClassResource.php?id="+ id,
+					url: "/TCP/WS/ClassResource.php?id=*",
 					// return type
 					dataType: "json",
+				
+					
 					// error processing
 					// xhr is the related XMLHttpRequest object
 					error: function (xhr, string) {
-
+					
 						console.log(msg);
 						console.log(string);
 					},
 					// success processing (when 200,201, 204 etc)
 					success: function (data) {
 						
+						$('td[name*=class_id]').each(function(){
+							$(this).text(data[$(this).text()]['name']);
+						});
+					//	console.log(data[1]['name']);
+						//$('td[name*=class_id]').text(data[$(this).attr('id')]['name']);
+
 					}
 				  });
+				  
+				
 				 
 				
 			};
@@ -128,6 +140,6 @@ header('Location: index.php'); // Redirecting To Login Page
 
 
 </div>
-<?php require 'base/bottom.html';?>
+<?php require 'base/bottom.html'; ?>
 </body>
 </html>
