@@ -1,5 +1,6 @@
 <?php
-
+require_once("WS/DemoDB.php");
+require_once("private/utils.php");
 session_start(); // Starting Session
 
 if(isset($_SESSION['login_user'])){
@@ -19,20 +20,13 @@ if (isset($_POST['submit'])) {
 		$password=$_POST['password'];
 	// Establishing Connection with Server by passing server_name, user_id and password as a parameter
 
-
-	if ($username=='Jack' && $password=='Jack') {
-		$_SESSION['login_user']=$username;
+      if(loginTrainer($username, $password) || loginStudent($username, $password)) {
+     	$_SESSION['login_user']=$username;
 		// Initializing Session
 		header("location: index.php"); // Redirecting To Other Page
-	}if ($username=='1' && $password=='1') {
-		$_SESSION['login_user']=$username;
-		// Initializing Session
-		header("location: index.php"); // Redirecting To Other Page
-	}  
-	else {
+      }else {
 		$error = "Username or Password is invalid";
-	}
-
+     }
 	}
 }
 ?>
