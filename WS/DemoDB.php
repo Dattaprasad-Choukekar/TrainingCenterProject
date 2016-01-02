@@ -14,4 +14,5 @@ class DemoDB {
     $bdd->exec("SET character_set_client = 'utf8'");
     return $bdd;
   }
+
 }

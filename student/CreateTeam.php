@@ -70,6 +70,7 @@ try {
 
 </div>
 	<div class="form-group">
+        <input type="hidden" id="class_id" value="<?=$_SESSION["login_user_class_id"] ?>"/>
 		<label class="control-label col-sm-2" for="name">Name:</label>
 		<div class="col-sm-10">
 			<input type="text" class="form-control" name="name" id="name"
@@ -88,7 +89,7 @@ try {
         
         
 		<div class="col-sm-10">
-        	<select class="form-control" id="project_id" name="project_id">
+        	<select class="form-control" id="project_select_id" name="project_id" >
         <?php 
         $result = getProjectIds();
         if (empty($result)) {
@@ -104,6 +105,12 @@ try {
         </select>
 		</div>
 	</div>
+    <div class="form-group" >
+		<label class="control-label col-sm-2" id="temp_res" for="Students">Students:</label>
+		<div class="col-sm-10" id="student_select_div">
+
+		</div>
+  </div>
 	
 	<div class="form-group">
 		<div class="col-sm-offset-2 col-sm-10">
@@ -162,13 +169,109 @@ try {
 </div>
 
 <script>
+
+
+
+    
+    $("#project_select_id").on('change', function(event) {
+       
+       var class_id = $("#class_id").val();
+         var projectId = this.options[this.selectedIndex].value;
+        console.log("Class ID: "+class_id);
+        getStudentsOfClass(class_id, projectId);
+        console.log("Project ID: "+projectId);
+    });
+    
+    
+    function getStudentsOfClass(class_id, projectId) {
+          $.ajax({
+          
+            type: "GET",
+            url: "/TCP/WS/StudentResource.php?id=*&class_id=" + class_id,
+
+			data:"",
+            error: function (xhr, string) {
+				console.log(xhr.status );
+				console.log(xhr.statusText );
+				console.log(xhr.responseText );
+                $("#error_lbl_id").text("Error occured");
+            },
+           
+            success: function (data) {
+                 getStudentsOfProject(data, projectId);
+            }
+          });
+    };
+    
+    
+    function getStudentsOfProject(student_data, projectId) {
+        
+          $.ajax({
+          
+            type: "GET",
+            url: "/TCP/WS/TeamResource.php?id=*&project_id=" + projectId,
+
+			data:"",
+            error: function (xhr, string) {
+				console.log(xhr.status );
+				console.log(xhr.statusText );
+				console.log(xhr.responseText );
+                $("#error_lbl_id").text("Error occured");
+            },
+           
+            success: function (data) {
+                console.log(student_data);
+                 for (var key in data) {
+                     if (data.hasOwnProperty(key)) {
+                            var team  = data[key];
+                             //console.log(team);
+                            if (student_data.hasOwnProperty(team.team_owner_id)) {
+                                //console.log("-----------" + team.team_owner_id);
+                                delete student_data[team.team_owner_id];
+                            }
+                            if (team.members) {
+                               for (var ele in team.members) {
+                                    if (student_data.hasOwnProperty(ele)) {
+                                        
+                                        delete student_data[ele];
+                                     }
+                               }
+                            }
+                     }  
+                    
+                } 
+                //$("#temp_res").text("");
+                for (var ele in student_data) {
+                   // $("#student_select_div").text("");;
+                    $("#student_select_div").append("<input  class='checkbox' type='checkbox' name='members_id[]' value='" + student_data[ele]['student_id'] +"'>" +student_data[ele]['name']  +""       
+                     );
+                      //$("#temp_res").text($("#temp_res").text() + student_data[ele]["name"]);
+                      
+                }  
+                console.log(student_data);  
+            }
+          });
+    };
+    
+
+    
+    
+
       $(document).ready(function () {    
+        
+        $("#project_select_id").trigger("change");
 		  
         // Get data from server when click on Reload button
         $("#submit").click(function (event) {
+          
+          
+          
 		  event.preventDefault();
+          
 		  var body = $("#form").serialize();
-		  body = body + "&team_owner_id=<?= $_SESSION['login_user_id'] ?>";
+          
+
+          body = body + "&team_owner_id=<?= $_SESSION['login_user_id'] ?>";
 		  console.log(body);
           $.ajax({
             // HTTP mthod
