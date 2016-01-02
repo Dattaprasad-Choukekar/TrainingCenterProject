@@ -108,7 +108,8 @@ function loginStudent($user_name, $password)
             if ($row != null) {
                 if ($user_name==$password) {
                     $_SESSION['login_user_id'] = $row["student_id"];
-                	$_SESSION['login_user_type'] = "STUDENT";                       
+                	$_SESSION['login_user_type'] = "STUDENT";     
+                    getStudentClassData($row["student_id"]);                  
                     return true;
                 } else {
                     return false;
@@ -127,6 +128,47 @@ function loginStudent($user_name, $password)
         return false;
     }
 }
+
+
+function getStudentClassData($student_id) {
+    
+    try {
+        $db = DemoDB::getConnection();
+        $sql = "SELECT s.class_id, c.name FROM STUDENT as s, Class as c where s.class_id=c.id and s.student_id=:id";
+        $stmt = $db->prepare($sql);
+        $stmt->bindValue(":id", $student_id, PDO::PARAM_INT);
+        $ok = $stmt->execute();
+        if ($ok) {
+            $nb = $stmt->rowCount();
+            if ($nb == 0) {
+                // student does not belong to any class
+                return;
+            }
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row != null) {
+                 $_SESSION["login_user_class_id"] = $row["class_id"];  
+                 $_SESSION["login_user_class_name"] = $row["name"];                
+            } else {
+               echo 'should not happen';
+               return;
+            }
+
+        } else {
+            echo 'error while getting student class information';
+            return ;
+        }
+    }
+    catch (PDOException $e) {
+        print_r($e->getMessage());
+        return false;
+    }
+}
+
+
+
+
+
+
 
 
 

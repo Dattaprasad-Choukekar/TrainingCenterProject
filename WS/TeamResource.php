@@ -65,6 +65,8 @@ class TeamResource extends HttpResource
             if (isset($_GET["team_owner_id"])) {
                 if (is_numeric($_GET["team_owner_id"])) {
                     $this::getTeamsByOwnerId();
+                } else {
+                    $this->exit_error(400, "idNotPositiveInteger");
                 }
             }
         }
@@ -83,6 +85,18 @@ class TeamResource extends HttpResource
             if ($ok) {
                 $nb = $stmt->rowCount();
                 if ($nb == 0) {
+                    $db = DemoDB::getConnection();
+                    $sql = "SELECT * FROM student WHERE student_id=:student_id";
+                    $stmt2 = $db->prepare($sql);
+                    $stmt2->bindValue(":student_id", $_GET["team_owner_id"], PDO::PARAM_INT);
+                    $ok = $stmt2->execute();
+                    $nb = $stmt2->rowCount();
+                    if ($nb == 0) {
+                        // Student does not exist
+                        $this->exit_error(404);
+                    }
+                    // student exists but no team
+
                     //$this->exit_error(404);
                 }
                 $sbody = "{";
@@ -114,7 +128,7 @@ class TeamResource extends HttpResource
      */
     protected function is_admin()
     {
-        $result = false;
+        $result = true;
         if (isset($_SERVER["PHP_AUTH_USER"])) {
             $result = $_SERVER["PHP_AUTH_USER"] == "admin" && $_SERVER["PHP_AUTH_PW"] ==
                 "admin";
@@ -132,32 +146,29 @@ class TeamResource extends HttpResource
         parse_str(file_get_contents("php://input"), $_PUT);
         if (empty($_PUT["name"])) {
             $this->exit_error(400, "nameMandatoryAndNotEmpty");
-        } else {
+        }  if (empty($_PUT["summary"])) {
+            $this->exit_error(400, "summaryMandatoryAndNotEmpty");
+        } if (empty($_PUT["project_id"])) {
+            $this->exit_error(400, "project_idMandatoryAndNotEmpty");
+        } if (empty($_PUT["team_owner_id"])) {
+            $this->exit_error(400, "team_owner_idMandatoryAndNotEmpty");
+        }else {
             try {
                 $db = DemoDB::getConnection();
-                $sql = "UPDATE person SET name=:name WHERE person_id=:id";
+                $sql = "INSERT INTO team (name, summary, project_id, team_owner_id) values (:name, :summary, :project_id, :team_owner_id)";
                 $stmt = $db->prepare($sql);
                 $stmt->bindValue(":name", ucwords(trim($_PUT["name"])));
-                $stmt->bindValue(":id", $this->id);
+                $stmt->bindValue(":summary", ucwords(trim($_PUT["summary"])));
+                $stmt->bindValue(":project_id", $_PUT["project_id"]);
+                $stmt->bindValue(":team_owner_id", $_PUT["team_owner_id"]);
                 $ok = $stmt->execute();
                 if ($ok) {
                     $this->statusCode = 204;
                     $this->body = "";
                     // Number of affected rows
-                    $nb = $stmt->rowCount();
-                    if ($nb == 0) {
-                        // No person or not really changed.
-                        // Check it;
-                        $sql = "SELECT person_id FROM person WHERE person_id=:id";
-                        $stmt = $db->prepare($sql);
-                        $stmt->bindValue(":id", $_GET["id"]);
-                        $ok = $stmt->execute();
-                        if ($stmt->fetch() == null) {
-                            $this->exit_error(404);
-                        }
-                    }
                 } else {
                     $erreur = $stmt->errorInfo();
+                    print_r( $erreur);
                     // si doublon
                     if ($erreur[1] == 1062) {
                         $this->exit_error(409, "duplicateName");
@@ -180,11 +191,15 @@ class TeamResource extends HttpResource
         if (empty($_GET["id"])) {
             $this->exit_error(400, "idRequired");
         }
+        if (empty($_GET["team_owner_id"])) {
+            $this->exit_error(400, "team_owner_idRequired");
+        }
         try {
             $db = DemoDB::getConnection();
-            $sql = "DELETE FROM person WHERE person_id=:id";
+            $sql = "DELETE FROM team WHERE team_id=:id and team_owner_id=:team_owner_id";
             $stmt = $db->prepare($sql);
             $stmt->bindValue(":id", $this->id);
+            $stmt->bindValue(":team_owner_id", $_GET["team_owner_id"]);
             $ok = $stmt->execute();
             if ($ok) {
                 $this->statusCode = 204;

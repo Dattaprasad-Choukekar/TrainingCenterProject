@@ -68,6 +68,7 @@ if ($_SESSION['login_user_type'] != STUDENT) {
             success: function (data) {
 				
 				processResponse(data);
+                
             }
           });
 		
@@ -76,50 +77,44 @@ if ($_SESSION['login_user_type'] != STUDENT) {
 			
 			for (var key in responseBody) {
 				var rowData = responseBody[key];
+                console.log(rowData);
 				var rowDatahtml="<tr>";
 				
 				rowDatahtml= rowDatahtml + "<td>" + rowData["team_id"] + "</td>";
 				rowDatahtml= rowDatahtml + "<td>" + rowData["name"] + "</td>";
 				rowDatahtml= rowDatahtml +"<td>" + rowData["summary"] + "</td>";
 				rowDatahtml= rowDatahtml + "<td>" + rowData["creation_date"] + "</td>";
-				rowDatahtml= rowDatahtml + "<td>" + rowData["project_id"] + "</td>";
-				//rowDatahtml= rowDatahtml + "<td name='class_id'>" + rowData["class_id"] + "</td>";
-				//console.log(getClassNameById(rowData["class_id"]));
+				rowDatahtml= rowDatahtml + "<td name='project_id'>" + rowData["Project_id"] + "</td>";
+	
 				//rowDatahtml = rowDatahtml + "<td><a href='EditProject.php?project_id="+ rowData["id"]+ "'><span class='glyphicon glyphicon-edit' aria-hidden='true'></span></a></td>";
-				//rowDatahtml = rowDatahtml + "<td><a href='DeleteProject.php?project_id="+ rowData["id"]+ "'><span class='glyphicon glyphicon-remove' aria-hidden='true'></span></a></td>";
+				rowDatahtml = rowDatahtml + "<td><a onclick='deleteTeam(this);' id='"+ rowData["team_id"]+"'><span class='glyphicon glyphicon-remove' aria-hidden='true'></span></a></td>";
 				rowDatahtml = rowDatahtml + "</tr>";
 				//console.log(rowDatahtml);
-				$("#projects_tbody").append(rowDatahtml);
+				$("#teams_tbody").append(rowDatahtml);
 						
 				
 			}
-			setClassNameData();
+			setProjectNameData();
 		};
 		
 		
-			function setClassNameData() {
-
-				
+			function setProjectNameData() {				
 				 $.ajax({
 					// HTTP mthod
 					type: "GET",
-					url: "/TCP/WS/ClassResource.php?id=*",
+					url: "/TCP/WS/ProjectResource.php?id=*&class_id=<?=$_SESSION["login_user_class_id"]?>",
 					// return type
-					dataType: "json",
-				
-					
+					dataType: "json",					
 					// error processing
 					// xhr is the related XMLHttpRequest object
-					error: function (xhr, string) {
-					
+					error: function (xhr, string) {					
 						console.log(msg);
 						console.log(string);
 					},
 					// success processing (when 200,201, 204 etc)
-					success: function (data) {
-						
-						$('td[name*=class_id]').each(function(){
-							$(this).text(data[$(this).text()]['name']);
+					success: function (data) {						
+						$('td[name*=project_id]').each(function(){
+							$(this).text(data[$(this).text()]['title']);
 						});
 					//	console.log(data[1]['name']);
 						//$('td[name*=class_id]').text(data[$(this).attr('id')]['name']);
@@ -131,7 +126,34 @@ if ($_SESSION['login_user_type'] != STUDENT) {
 				 
 				
 			};
+            
+            
+           
       });
+      
+       function deleteTeam(myvar) {
+                	 $.ajax({
+					// HTTP mthod
+					type: "DELETE",
+					url: "/TCP/WS/TeamResource.php?id=" + myvar.getAttribute("id") + "&team_owner_id=<?=$_SESSION["login_user_id"]?>",
+					// return type
+					dataType: "json",					
+					// error processing
+					// xhr is the related XMLHttpRequest object
+					error: function (xhr, string) {					
+						console.log(msg);
+						console.log(string);
+					},
+					// success processing (when 200,201, 204 etc)
+					success: function (data) {	
+					   window.location="/TCP/student/MyTeams.php";
+					//	console.log(data[1]['name']);
+						//$('td[name*=class_id]').text(data[$(this).attr('id')]['name']);
+
+					}
+				  });
+				  
+            }
 
     </script>
 
