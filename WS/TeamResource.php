@@ -75,10 +75,64 @@ class TeamResource extends HttpResource
                     } else {
                         $this->exit_error(400, "project_idNotPositiveInteger");
                     }
+                }else
+                if (isset($_GET["team_member_id"])) {
+                    if (is_numeric($_GET["team_member_id"])) {
+                        $this::getTeamsByMemberId();
+                    } else {
+                        $this->exit_error(400, "team_member_idNotPositiveInteger");
+                    }
                 }
         }
 
 
+    }
+    
+     public function getTeamsByMemberId()
+    {
+        try {
+            $db = DemoDB::getConnection();
+            $sql = "SELECT * FROM team WHERE team_id in (select team_id from team_membership where student_id=:student_id)";
+            $stmt = $db->prepare($sql);
+            $stmt->bindValue(":student_id", $_GET["team_member_id"], PDO::PARAM_INT);
+            $ok = $stmt->execute();
+            if ($ok) {
+                $nb = $stmt->rowCount();
+                if ($nb == 0) {
+                    $db = DemoDB::getConnection();
+                    $sql = "SELECT * FROM student WHERE student_id=:student_id";
+                    $stmt2 = $db->prepare($sql);
+                    $stmt2->bindValue(":student_id", $_GET["team_member_id"], PDO::PARAM_INT);
+                    $ok = $stmt2->execute();
+                    $nb = $stmt2->rowCount();
+                    if ($nb == 0) {
+                        // Student does not exist
+                        $this->exit_error(404, 'team_member_idDoesNotExist');
+                    }
+                    // student exists but no team
+
+                    //$this->exit_error(404);
+                }
+                $sbody = "{";
+                $this->statusCode = 200;
+                $this->headers[] = "Content-type: text/json; charset=utf-8";
+
+                while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                    if ($row != null) {
+                        $sbody .= "\"" . $row["team_id"] . "\":" . json_encode($row) . ",";
+                    }
+                }
+
+                $sbody = rtrim($sbody, ",");
+                $this->body = $sbody . "}";
+
+            } else {
+                $this->exit_error(500, print_r($db->errorInfo(), true));
+            }
+        }
+        catch (PDOException $e) {
+            $this->exit_error(500, $e->getMessage());
+        }
     }
 
     public function getTeamsByProjectId()

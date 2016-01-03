@@ -71,8 +71,6 @@ try {
 </div>
 	<div class="form-group">
         <input type="hidden" id="class_id" value="<?=$_SESSION["login_user_class_id"] ?>"/>
-         <input type="hidden" id="login_student_id" value="<?=$_SESSION["login_user_id"] ?>"/>
-        
 		<label class="control-label col-sm-2" for="name">Name:</label>
 		<div class="col-sm-10">
 			<input type="text" class="form-control" name="name" id="name"
@@ -85,6 +83,17 @@ try {
 			<input type="text" class="form-control" name="summary" id="summary"
 				placeholder="Enter summary" required>
 		</div>
+	</div>
+	<div class="form-group">
+		<label class="control-label col-sm-2" for="summary">Test:</label>
+		
+		<div class="checkbox col-sm-10">
+         <label>
+          <input type="checkbox" value="">
+                Option one is this and that&mdash;be sure to include why it's great
+         </label>
+        </div>
+	
 	</div>
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="project_id">Project Id:</label>
@@ -100,7 +109,6 @@ try {
         <?php
         }
         
-       // echo "<option  value=''></option>";
         foreach ($result as $value) {
                 echo "<option  value='".$value['id'] ."'>".$value['title']. "</option>";
             }
@@ -110,7 +118,7 @@ try {
 	</div>
     <div class="form-group" >
 		<label class="control-label col-sm-2" id="temp_res" for="Students">Students:</label>
-		<div class="checkbox col-sm-10" id="student_select_div">
+		<div class="col-sm-10" id="student_select_div">
 
 		</div>
   </div>
@@ -128,8 +136,7 @@ try {
 function getProjectIds() {
 try {
             $db = DemoDB::getConnection();
-            $sql = "select id, title FROM project WHERE id not in (select project_id from team where team_owner_id=" . $_SESSION["login_user_id"].") and id not in (select project_id from team_membership where student_id="
-            . $_SESSION["login_user_id"].")"
+            $sql = "select id, title FROM project WHERE id not in (select project_id from team where team_owner_id=" . $_SESSION["login_user_id"]." )"
             ." and class_id=" . $_SESSION["login_user_class_id"].";";
             //$sql = "SELECT id FROM project;";
             $stmt = $db->prepare($sql);
@@ -177,10 +184,14 @@ try {
 
 
     
-
-    
-    
-    
+    $("#project_select_id").on('change', function(event) {
+       
+       var class_id = $("#class_id").val();
+         var projectId = this.options[this.selectedIndex].value;
+        console.log("Class ID: "+class_id);
+        getStudentsOfClass(class_id, projectId);
+        console.log("Project ID: "+projectId);
+    });
     
     
     function getStudentsOfClass(class_id, projectId) {
@@ -198,9 +209,6 @@ try {
             },
            
             success: function (data) {
-                  // Remove current studdent from it
-                  var curr_std_id = $("#login_student_id").val();
-                  delete data[curr_std_id];
                  getStudentsOfProject(data, projectId);
             }
           });
@@ -224,7 +232,6 @@ try {
            
             success: function (data) {
                 console.log(student_data);
-                
                  for (var key in data) {
                      if (data.hasOwnProperty(key)) {
                             var team  = data[key];
@@ -243,11 +250,11 @@ try {
                             }
                      }  
                     
-                } 
-                $("#student_select_div").empty();
+                } student_select_div
+                //$("#temp_res").text("");
                 for (var ele in student_data) {
                    // $("#student_select_div").text("");;
-                    $("#student_select_div").append("<label><input  type='checkbox' name='members_id[]' value='" + student_data[ele]['student_id'] +"'>" +student_data[ele]['name']  +"</input></label>"       
+                    $("#").append("<input  class='checkbox' type='checkbox' name='members_id[]' value='" + student_data[ele]['student_id'] +"'>" +student_data[ele]['name']  +""       
                      );
                       //$("#temp_res").text($("#temp_res").text() + student_data[ele]["name"]);
                       
@@ -262,17 +269,8 @@ try {
     
 
       $(document).ready(function () {    
-        $("#project_select_id").on('change', function(event) {
-       
-       var class_id = $("#class_id").val();
-         var projectId = this.options[this.selectedIndex].value;
-        console.log("Class ID: "+class_id);
-        getStudentsOfClass(class_id, projectId);
-        console.log("Project ID: "+projectId);
-    });
-    
         
-        $('#project_select_id').trigger('change');
+        $("#project_select_id").trigger("change");
 		  
         // Get data from server when click on Reload button
         $("#submit").click(function (event) {
@@ -302,7 +300,7 @@ try {
 				console.log(xhr.status );
 				console.log(xhr.statusText );
 				console.log(xhr.responseText );
-                $("#error_lbl_id").text("Error occured: " + xhr.responseText);
+                $("#error_lbl_id").text("Error occured");
                 
 				//var msg = (xhr.status == 404    ? "Person   not found": "Error : " + xhr.status + " " + xhr.statusText;
               //$("#message").html(msg);

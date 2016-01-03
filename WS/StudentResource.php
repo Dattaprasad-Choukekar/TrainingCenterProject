@@ -85,7 +85,8 @@ class StudentResource extends HttpResource
 
             $this->getAllStudents();
         } else {
-            //  $this->getProjectsyId();
+            
+             $this->getStudentById();
 
         }
     }
@@ -183,18 +184,21 @@ class StudentResource extends HttpResource
     }
 
 
-    function getProjectsyId()
+    function getStudentById()
     {
         try {
 
             $db = DemoDB::getConnection();
-            $sql = "SELECT id, title, subject, creation_datetime, deadline, class_id, owner_id FROM Project WHERE id=:project_id";
+            $sql = "SELECT * FROM student WHERE student_id=:student_id";
             $stmt = $db->prepare($sql);
-            $stmt->bindValue(":project_id", $this->id);
+            $stmt->bindValue(":student_id", $this->id);
             $ok = $stmt->execute();
             if ($ok) {
-
                 $row = $stmt->fetch(PDO::FETCH_ASSOC);
+                $nb = $stmt->rowCount();
+                if ($nb==0) {
+                    $this->exit_error(404, 'studentNotFound');
+                }
                 if ($row != null) {
                     $this->statusCode = 200;
                     // Produce utf8 encoded json
@@ -204,6 +208,7 @@ class StudentResource extends HttpResource
                     $this->exit_error(404);
                 }
             } else {
+                echo 'here';
                 $this->exit_error(500, print_r($db->errorInfo(), true));
             }
         }
