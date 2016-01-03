@@ -25,7 +25,6 @@ if ($_SESSION['login_user_type'] != STUDENT) {
 
 <div class="row placeholders"></div>
 
-<?php require '../base/top.html'; ?>
 
 
 
@@ -146,7 +145,7 @@ if ($_SESSION['login_user_type'] != STUDENT) {
 				rowDatahtml= rowDatahtml + "<td>" + rowData["creation_date"] + "</td>";
 				rowDatahtml= rowDatahtml + "<td name='project_id'>" + rowData["Project_id"] + "</td>";
 	
-				//rowDatahtml = rowDatahtml + "<td><a href='EditProject.php?project_id="+ rowData["id"]+ "'><span class='glyphicon glyphicon-edit' aria-hidden='true'></span></a></td>";
+				rowDatahtml = rowDatahtml + "<td><a href='EditTeam.php?team_id="+ rowData["team_id"]+ "'><span class='glyphicon glyphicon-edit' aria-hidden='true'></span></a></td>";
 				rowDatahtml = rowDatahtml + "<td><a onclick='deleteTeam(this);' id='"+ rowData["team_id"]+"'><span class='glyphicon glyphicon-remove' aria-hidden='true'></span></a></td>";
 				rowDatahtml = rowDatahtml + "</tr>";
                 //rowDatahtml = rowDatahtml + "<td><ul><li>aaa</li><li>aaa</li><li>aaa</li><li>aaa</li><li>aaa</li><li>aaa</li><li>aaa</li><li>aaa</li><li>aaa</li><li>aaa</li><li>aaa</li><li>aaa</li><li>aaa</li><li>aaa</li><li>aaa</li><li>aaa</li><li>aaa</li><li>aaa</li><li>aaa</li><li>aaa</li></ul></td>";

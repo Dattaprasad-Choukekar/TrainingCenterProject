@@ -50,7 +50,7 @@ try {
 <html lang="en">
 <head>
 <?php require '../base/head.html'; ?>
-<title>Create Team</title>
+<title>Edit Team</title>
 </head>
 
 <body>
@@ -63,7 +63,7 @@ try {
 
 <?php require '../base/top.html'; ?>
 
-<h2 class="sub-header">Create Team</h2>
+<h2 class="sub-header">Edit Team</h2>
 <form id="form" class="form-horizontal" role="form" action="" method="post">
 <div class="form-group  has-error">
   <label class="control-label col-sm-2" id="error_lbl_id"></label>
@@ -71,54 +71,33 @@ try {
 </div>
 	<div class="form-group">
         <input type="hidden" id="class_id" value="<?=$_SESSION["login_user_class_id"] ?>"/>
+         <input type="hidden" id="login_student_id" value="<?=$_SESSION["login_user_id"] ?>"/>
+         <input type="hidden" id="curr_project_id" value=""/>
+        
 		<label class="control-label col-sm-2" for="name">Name:</label>
 		<div class="col-sm-10">
-			<input type="text" class="form-control" name="name" id="name"
+			<input type="text" class="form-control" name="name" id="name_id"
 				placeholder="Enter name" required>
 		</div>
 	</div>
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="summary">Summary:</label>
 		<div class="col-sm-10">
-			<input type="text" class="form-control" name="summary" id="summary"
+			<input type="text" class="form-control" name="summary" id="summary_id"
 				placeholder="Enter summary" required>
 		</div>
-	</div>
-	<div class="form-group">
-		<label class="control-label col-sm-2" for="summary">Test:</label>
-		
-		<div class="checkbox col-sm-10">
-         <label>
-          <input type="checkbox" value="">
-                Option one is this and that&mdash;be sure to include why it's great
-         </label>
-        </div>
-	
 	</div>
 	<div class="form-group">
 		<label class="control-label col-sm-2" for="project_id">Project Id:</label>
         
         
 		<div class="col-sm-10">
-        	<select class="form-control" id="project_select_id" name="project_id" >
-        <?php 
-        $result = getProjectIds();
-        if (empty($result)) {
-            ?>
-             <label class="control-label col-sm-2" id="error_lbl_id">You can not create any team!</label>
-        <?php
-        }
-        
-        foreach ($result as $value) {
-                echo "<option  value='".$value['id'] ."'>".$value['title']. "</option>";
-            }
-        ?>
-        </select>
+            <label class="control-label col-sm-2" id="project_select_id" name="project_id" >Project Id:</label>
 		</div>
 	</div>
     <div class="form-group" >
 		<label class="control-label col-sm-2" id="temp_res" for="Students">Students:</label>
-		<div class="col-sm-10" id="student_select_div">
+		<div class="checkbox col-sm-10" id="student_select_div">
 
 		</div>
   </div>
@@ -136,7 +115,8 @@ try {
 function getProjectIds() {
 try {
             $db = DemoDB::getConnection();
-            $sql = "select id, title FROM project WHERE id not in (select project_id from team where team_owner_id=" . $_SESSION["login_user_id"]." )"
+            $sql = "select id, title FROM project WHERE id not in (select project_id from team where team_owner_id=" . $_SESSION["login_user_id"].") and id not in (select project_id from team_membership where student_id="
+            . $_SESSION["login_user_id"].")"
             ." and class_id=" . $_SESSION["login_user_class_id"].";";
             //$sql = "SELECT id FROM project;";
             $stmt = $db->prepare($sql);
@@ -184,14 +164,10 @@ try {
 
 
     
-    $("#project_select_id").on('change', function(event) {
-       
-       var class_id = $("#class_id").val();
-         var projectId = this.options[this.selectedIndex].value;
-        console.log("Class ID: "+class_id);
-        getStudentsOfClass(class_id, projectId);
-        console.log("Project ID: "+projectId);
-    });
+
+    
+    
+    
     
     
     function getStudentsOfClass(class_id, projectId) {
@@ -209,6 +185,9 @@ try {
             },
            
             success: function (data) {
+                  // Remove current studdent from it
+                  var curr_std_id = $("#login_student_id").val();
+                  delete data[curr_std_id];
                  getStudentsOfProject(data, projectId);
             }
           });
@@ -232,6 +211,7 @@ try {
            
             success: function (data) {
                 console.log(student_data);
+                
                  for (var key in data) {
                      if (data.hasOwnProperty(key)) {
                             var team  = data[key];
@@ -250,11 +230,11 @@ try {
                             }
                      }  
                     
-                } student_select_div
-                //$("#temp_res").text("");
+                } 
+                $("#student_select_div").empty();
                 for (var ele in student_data) {
                    // $("#student_select_div").text("");;
-                    $("#").append("<input  class='checkbox' type='checkbox' name='members_id[]' value='" + student_data[ele]['student_id'] +"'>" +student_data[ele]['name']  +""       
+                    $("#student_select_div").append("<label><input  type='checkbox' name='members_id[]' value='" + student_data[ele]['student_id'] +"'>" +student_data[ele]['name']  +"</input></label>"       
                      );
                       //$("#temp_res").text($("#temp_res").text() + student_data[ele]["name"]);
                       
@@ -268,9 +248,56 @@ try {
     
     
 
-      $(document).ready(function () {    
+      $(document).ready(function () {  
         
-        $("#project_select_id").trigger("change");
+                  $.ajax({
+            // HTTP mthod
+            type: "GET",
+            url: "/TCP/WS/TeamResource.php?id=<?=$_GET['team_id']?>",
+            beforeSend: function (xhr) {
+             // xhr.setRequestHeader("Authorization", auth);
+              //xhr.setRequestHeader('Authorization', 'Basic ' + btoa("admin" + ":" + "admin"));
+            },
+            // return type
+			data:'',
+            // error processing
+            // xhr is the related XMLHttpRequest object
+            error: function (xhr, string) {
+				console.log(xhr.status );
+				console.log(xhr.statusText );
+				console.log(xhr.responseText );
+                $("#error_lbl_id").text("Error occured: " + xhr.responseText);
+                
+				//var msg = (xhr.status == 404    ? "Person   not found": "Error : " + xhr.status + " " + xhr.statusText;
+              //$("#message").html(msg);
+            },
+            // success processing (when 200,201, 204 etc)
+            success: function (data) {
+                
+				$("#name_id").val(data['name']);
+                	$("#summary_id").val(data['summary']);
+                    	$("#curr_project_id").val(data['project_id']);
+              //$("#name").val(data.name);
+              //$("#message").html("Person loaded")
+            }
+          });
+        
+        
+        
+        
+        
+        
+        $("#project_select_id").on('change', function(event) {
+       
+       var class_id = $("#class_id").val();
+         var projectId = this.options[this.selectedIndex].value;
+        console.log("Class ID: "+class_id);
+        getStudentsOfClass(class_id, projectId);
+        console.log("Project ID: "+projectId);
+    });
+    
+        
+        $('#project_select_id').trigger('change');
 		  
         // Get data from server when click on Reload button
         $("#submit").click(function (event) {
@@ -300,7 +327,7 @@ try {
 				console.log(xhr.status );
 				console.log(xhr.statusText );
 				console.log(xhr.responseText );
-                $("#error_lbl_id").text("Error occured");
+                $("#error_lbl_id").text("Error occured: " + xhr.responseText);
                 
 				//var msg = (xhr.status == 404    ? "Person   not found": "Error : " + xhr.status + " " + xhr.statusText;
               //$("#message").html(msg);

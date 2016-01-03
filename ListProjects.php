@@ -88,7 +88,8 @@ if ($_SESSION['login_user_type'] != TRAINER) {
 				rowDatahtml= rowDatahtml + "<td>" + rowData["deadline"] + "</td>";
 				rowDatahtml= rowDatahtml + "<td name='class_id'>" + rowData["class_id"] + "</td>";
 				//console.log(getClassNameById(rowData["class_id"]));
-				rowDatahtml = rowDatahtml + "<td><a href='EditProject.php?project_id="+ rowData["id"]+ "'><span class='glyphicon glyphicon-edit' aria-hidden='true'></span></a></td>";
+				rowDatahtml = rowDatahtml + "<td><a href='ProjectDetails.php?project_id="+ rowData["id"]+ "'><span class='glyphicon glyphicon-zoom-in' aria-hidden='true'></span></a></td>";
+                rowDatahtml = rowDatahtml + "<td><a href='EditProject.php?project_id="+ rowData["id"]+ "'><span class='glyphicon glyphicon-edit' aria-hidden='true'></span></a></td>";
 				rowDatahtml = rowDatahtml + "<td><a href='DeleteProject.php?project_id="+ rowData["id"]+ "'><span class='glyphicon glyphicon-remove' aria-hidden='true'></span></a></td>";
 				rowDatahtml = rowDatahtml + "</tr>";
 				//console.log(rowDatahtml);

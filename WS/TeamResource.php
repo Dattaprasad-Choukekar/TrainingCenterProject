@@ -75,20 +75,20 @@ class TeamResource extends HttpResource
                     } else {
                         $this->exit_error(400, "project_idNotPositiveInteger");
                     }
-                }else
-                if (isset($_GET["team_member_id"])) {
-                    if (is_numeric($_GET["team_member_id"])) {
-                        $this::getTeamsByMemberId();
-                    } else {
-                        $this->exit_error(400, "team_member_idNotPositiveInteger");
+                } else
+                    if (isset($_GET["team_member_id"])) {
+                        if (is_numeric($_GET["team_member_id"])) {
+                            $this::getTeamsByMemberId();
+                        } else {
+                            $this->exit_error(400, "team_member_idNotPositiveInteger");
+                        }
                     }
-                }
         }
 
 
     }
-    
-     public function getTeamsByMemberId()
+
+    public function getTeamsByMemberId()
     {
         try {
             $db = DemoDB::getConnection();
@@ -317,7 +317,7 @@ class TeamResource extends HttpResource
             $this->exit_error(400, "team_owner_idMandatoryAndNotEmpty");
         } else {
             $db = DemoDB::getConnection();
-            
+
             try {
 
                 $sql = "INSERT INTO team (name, summary, project_id, team_owner_id) values (:name, :summary, :project_id, :team_owner_id)";
@@ -351,7 +351,7 @@ class TeamResource extends HttpResource
 
 
             if (!empty($_PUT["members_id"]) && $id != -1 && $id != 0) {
-               // $member_ids = explode(",", $_PUT["members_id"]);
+                // $member_ids = explode(",", $_PUT["members_id"]);
                 foreach ($_PUT["members_id"] as $key => $value) {
                     echo $key;
 
@@ -384,11 +384,123 @@ class TeamResource extends HttpResource
                         $this->exit_error(500, $e->getMessage());
                     }
                 }
-              
+
 
             }
         }
         echo 'ddddddddddddddddd';
+
+    }
+
+    protected function do_post()
+    {
+        if (!$this->is_admin()) {
+            $this->exit_error(401, "mustBeAdmin");
+        }
+        $id = -1;
+        // Les parametres passes en put
+        parse_str(file_get_contents("php://input"), $_PUT);
+
+        if (empty($_PUT["name"])) {
+            $this->exit_error(400, "nameMandatoryAndNotEmpty");
+        }
+        if (empty($_PUT["summary"])) {
+            $this->exit_error(400, "summaryMandatoryAndNotEmpty");
+        } else {
+            $db = DemoDB::getConnection();
+
+            try {
+
+                $sql = "update team set name=:name ,summary=:summary where team_id=:team_id";
+                $stmt = $db->prepare($sql);
+                $stmt->bindValue(":name", ucwords(trim($_PUT["name"])));
+                $stmt->bindValue(":summary", ucwords(trim($_PUT["summary"])));
+                $stmt->bindValue(":team_id", $this->id, PDO::PARAM_INT);
+                $ok = $stmt->execute();
+
+                if ($ok) {
+                    $this->statusCode = 204;
+
+                    // $this->body = "";
+
+                    // Number of affected rows
+                } else {
+                    $erreur = $stmt->errorInfo();
+                    print_r($erreur);
+                    // si doublon
+                    if ($erreur[1] == 1062) {
+                        $this->exit_error(409, "duplicateName");
+                    } else {
+                        $this->exit_error(409, $erreur[1] . " : " . $erreur[2]);
+                    }
+                }
+            }
+            catch (PDOException $e) {
+                $this->exit_error(500, $e->getMessage());
+            }
+
+
+            if (!empty($_PUT["members_id"])) {
+                // $member_ids = explode(",", $_PUT["members_id"]);
+                try {
+                    $db = DemoDB::getConnection();
+                    $sql = "delete from team_membership where team_id=:team_id";
+                    $stmt = $db->prepare($sql);
+                    $stmt->bindValue(":team_id", $this->id, PDO::PARAM_INT);
+                    $ok = $stmt->execute();
+                    if ($ok) {
+                        $this->statusCode = 204;
+
+                        // $this->body = "";
+
+                        // Number of affected rows
+                    } else {
+                        $erreur = $stmt->errorInfo();
+                        print_r($erreur);
+                        // si doublon
+                        if ($erreur[1] == 1062) {
+                            $this->exit_error(409, "notable to add members");
+                        } else {
+                            $this->exit_error(409, $erreur[1] . " : " . $erreur[2]);
+                        }
+                    }
+                }
+                catch (PDOException $e) {
+                    $this->exit_error(500, $e->getMessage());
+                }
+                foreach ($_PUT["members_id"] as $key => $value) {
+
+                    try {
+                        $sql = "INSERT INTO team_membership (team_id, student_id) values (:team_id, :student_id)";
+                        $stmt = $db->prepare($sql);
+                        $stmt->bindValue(":team_id", $this->id, PDO::PARAM_INT);
+                        $stmt->bindValue(":student_id", $value, PDO::PARAM_INT);
+                        $ok = $stmt->execute();
+                        if ($ok) {
+                            $this->statusCode = 204;
+
+                            // $this->body = "";
+
+                            // Number of affected rows
+                        } else {
+                            $erreur = $stmt->errorInfo();
+                            print_r($erreur);
+                            // si doublon
+                            if ($erreur[1] == 1062) {
+                                $this->exit_error(409, "notable to add members");
+                            } else {
+                                $this->exit_error(409, $erreur[1] . " : " . $erreur[2]);
+                            }
+                        }
+                    }
+                    catch (PDOException $e) {
+                        $this->exit_error(500, $e->getMessage());
+                    }
+                }
+
+
+            }
+        }
 
     }
 
@@ -415,8 +527,8 @@ class TeamResource extends HttpResource
             } else {
                 $erreur = $stmt->errorInfo();
                 $this->exit_error(409, $erreur[1] . " : " . $erreur[2]);
-            }      
-            
+            }
+
             $db = DemoDB::getConnection();
             $sql = "DELETE FROM team WHERE team_id=:id and team_owner_id=:team_owner_id";
             $stmt = $db->prepare($sql);
