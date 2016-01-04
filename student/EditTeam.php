@@ -92,7 +92,7 @@ try {
         
         
 		<div class="col-sm-10">
-            <label class="control-label col-sm-2" id="project_select_id" name="project_id" >Project Id:</label>
+            <label class="control-label col-sm-2" id="project_label_id" name="project_id" >Project Id:</label>
 		</div>
 	</div>
     <div class="form-group" >
@@ -215,28 +215,30 @@ try {
                  for (var key in data) {
                      if (data.hasOwnProperty(key)) {
                             var team  = data[key];
-                             //console.log(team);
                             if (student_data.hasOwnProperty(team.team_owner_id)) {
-                                //console.log("-----------" + team.team_owner_id);
                                 delete student_data[team.team_owner_id];
                             }
-                            if (team.members) {
-                               for (var ele in team.members) {
-                                    if (student_data.hasOwnProperty(ele)) {
-                                        
-                                        delete student_data[ele];
-                                     }
-                               }
-                            }
+                            if (window.project_data['team_id' ] != team.team_id){
+                                var memeberArr = JSON.parse(team.members);
+                                if (memeberArr) {
+                                   for (var ele in memeberArr) {              
+                                        if (student_data.hasOwnProperty(memeberArr[ele].toString())) {
+                                            delete student_data[memeberArr[ele]];
+                                         }
+                                   }
+                                }
+                            } 
                      }  
                     
                 } 
                 $("#student_select_div").empty();
-                for (var ele in student_data) {
-                   // $("#student_select_div").text("");;
-                    $("#student_select_div").append("<label><input  type='checkbox' name='members_id[]' value='" + student_data[ele]['student_id'] +"'>" +student_data[ele]['name']  +"</input></label>"       
+                console.log(student_data);
+                var memeberArr = JSON.parse(window.project_data['members']);
+                for (var ele in student_data) {                   
+                   
+                   var checkedVal = memeberArr.indexOf(parseInt(student_data[ele]['student_id'])) <0 ? "" :" checked ";
+                    $("#student_select_div").append("<label><input  type='checkbox' name='members_id[]' "+ checkedVal +" value='" + student_data[ele]['student_id'] +"'>" +student_data[ele]['name']  +"</input></label>"       
                      );
-                      //$("#temp_res").text($("#temp_res").text() + student_data[ele]["name"]);
                       
                 }  
                 console.log(student_data);  
@@ -273,31 +275,54 @@ try {
             },
             // success processing (when 200,201, 204 etc)
             success: function (data) {
-                
+                window.project_data = data;
+                console.log(data);
 				$("#name_id").val(data['name']);
                 	$("#summary_id").val(data['summary']);
-                    	$("#curr_project_id").val(data['project_id']);
-              //$("#name").val(data.name);
-              //$("#message").html("Person loaded")
+                    	$("#curr_project_id").val(data['Project_id']);
+                        
+                        
+                              var class_id = $("#class_id").val();
+                            var projectId = $("#curr_project_id").val();
+                            setProjectName(projectId);
+                         console.log("Class ID: "+class_id);
+                         getStudentsOfClass(class_id, projectId);
+                         console.log("Project ID: "+projectId);
             }
           });
         
+       function setProjectName(projectId) {
         
-        
-        
-        
-        
-        $("#project_select_id").on('change', function(event) {
-       
-       var class_id = $("#class_id").val();
-         var projectId = this.options[this.selectedIndex].value;
-        console.log("Class ID: "+class_id);
-        getStudentsOfClass(class_id, projectId);
-        console.log("Project ID: "+projectId);
-    });
-    
-        
-        $('#project_select_id').trigger('change');
+                          $.ajax({
+            // HTTP mthod
+            type: "GET",
+            url: "/TCP/WS/ProjectResource.php?id=" + projectId,
+            beforeSend: function (xhr) {
+             // xhr.setRequestHeader("Authorization", auth);
+              //xhr.setRequestHeader('Authorization', 'Basic ' + btoa("admin" + ":" + "admin"));
+            },
+            // return type
+			data:'',
+            // error processing
+            // xhr is the related XMLHttpRequest object
+            error: function (xhr, string) {
+				console.log(xhr.status );
+				console.log(xhr.statusText );
+				console.log(xhr.responseText );
+                $("#error_lbl_id").text("Error occured: " + xhr.responseText);
+                
+				//var msg = (xhr.status == 404    ? "Person   not found": "Error : " + xhr.status + " " + xhr.statusText;
+              //$("#message").html(msg);
+            },
+            // success processing (when 200,201, 204 etc)
+            success: function (data) {
+                $("#project_label_id").text(data['title']);
+            }
+          });
+       };
+ 
+  
+     
 		  
         // Get data from server when click on Reload button
         $("#submit").click(function (event) {
@@ -313,8 +338,8 @@ try {
 		  console.log(body);
           $.ajax({
             // HTTP mthod
-            type: "PUT",
-            url: "/TCP/WS/TeamResource.php?id=*",
+            type: "POST",
+            url: "/TCP/WS/TeamResource.php?id="+window.project_data['team_id'],
             beforeSend: function (xhr) {
              // xhr.setRequestHeader("Authorization", auth);
               //xhr.setRequestHeader('Authorization', 'Basic ' + btoa("admin" + ":" + "admin"));

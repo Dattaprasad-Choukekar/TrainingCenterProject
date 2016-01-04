@@ -38,7 +38,7 @@ if ($_SESSION['login_user_type'] != TRAINER) {
 				<th>Creation Date</th>
 				<th>Deadline</th>
 				<th>Class Name</th>
-				<th>Edit</th>
+				<th>Details</th>
 				<th>Delete</th>
 			</tr>
 		</thead>
